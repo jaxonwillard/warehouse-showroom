@@ -1,0 +1,10 @@
+{
+  "name": "warehouse-showroom",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Three.js model of a warehouse + interior showroom/conference room. Buildless — Three.js loads from a CDN via importmap; serve statically (see README).",
+  "scripts": {
+    "serve": "python -m http.server 5173"
+  }
+}

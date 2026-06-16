@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Warehouse Showroom</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0e0e12; }
+      #app { width: 100vw; height: 100vh; display: block; }
+      #hud {
+        position: fixed;
+        left: 12px;
+        bottom: 12px;
+        font: 12px/1.4 ui-monospace, "Cascadia Code", Consolas, monospace;
+        color: #aeb4c2;
+        background: rgba(20, 22, 30, 0.7);
+        padding: 8px 10px;
+        border-radius: 6px;
+        pointer-events: none;
+        user-select: none;
+      }
+      #hud b { color: #e8ebf2; }
+
+      /* Coordinate readout that follows the cursor (Blueprint mode only). */
+      #readout {
+        position: fixed;
+        font: 12px/1.2 ui-monospace, "Cascadia Code", Consolas, monospace;
+        color: #ffd479;
+        background: rgba(20, 22, 30, 0.85);
+        padding: 3px 6px;
+        border-radius: 4px;
+        pointer-events: none;
+        user-select: none;
+        transform: translate(14px, 14px);
+        white-space: nowrap;
+        display: none;
+        z-index: 10;
+      }
+
+      /* Side panel listing recorded clicks. */
+      #picker {
+        position: fixed;
+        right: 12px;
+        bottom: 12px;
+        width: 210px;
+        max-height: 60vh;
+        display: none;
+        flex-direction: column;
+        font: 12px/1.4 ui-monospace, "Cascadia Code", Consolas, monospace;
+        color: #cdd3dc;
+        background: rgba(20, 22, 30, 0.85);
+        border: 1px solid #2a3038;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      #picker header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 7px 9px;
+        background: rgba(40, 44, 56, 0.9);
+        color: #e8ebf2;
+        font-weight: 700;
+      }
+      #picker button {
+        font: inherit;
+        color: #ffb4b4;
+        background: transparent;
+        border: 1px solid #5a3a3a;
+        border-radius: 4px;
+        padding: 1px 7px;
+        cursor: pointer;
+      }
+      #picker button:hover { background: rgba(90, 58, 58, 0.4); }
+      #picker ol {
+        list-style: none;
+        margin: 0;
+        padding: 4px 0;
+        overflow-y: auto;
+      }
+      #picker li {
+        display: flex;
+        gap: 8px;
+        padding: 2px 9px;
+      }
+      #picker li .idx { color: #6f7682; width: 22px; text-align: right; }
+      #picker li .val { color: #ffd479; }
+      #picker .empty { padding: 8px 9px; color: #6f7682; }
+
+      /* Walk-mode hint / click-to-start overlay. */
+      #walkhint {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font: 16px/1.6 ui-monospace, "Cascadia Code", Consolas, monospace;
+        color: #e8ebf2;
+        background: rgba(8, 9, 12, 0.55);
+        cursor: pointer;
+        user-select: none;
+        z-index: 20;
+      }
+      #walkhint b { color: #ffd479; }
+    </style>
+  </head>
+  <body>
+    <canvas id="app"></canvas>
+    <div id="hud">
+      <b>Drag</b> orbit &nbsp; <b>Right-drag</b> pan &nbsp; <b>Scroll</b> zoom<br />
+      Use the panel (top-right) to switch <b>3D / Blueprint</b> and toggle layers.
+    </div>
+    <div id="readout">x: – , y: –</div>
+    <div id="walkhint">
+      <div>
+        <b>Click to walk</b><br />
+        WASD / arrows to move &nbsp;·&nbsp; mouse to look &nbsp;·&nbsp; ESC to release<br />
+        Eye height fixed at 6 ft
+      </div>
+    </div>
+    <div id="picker">
+      <header>
+        <span>Picked points (ft)</span>
+        <button id="picker-clear" type="button">clear</button>
+      </header>
+      <ol id="picker-list"></ol>
+    </div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/",
+          "lil-gui": "https://unpkg.com/lil-gui@0.19.2/dist/lil-gui.esm.js"
+        }
+      }
+    </script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

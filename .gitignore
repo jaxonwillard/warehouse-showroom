@@ -1,0 +1,14 @@
+# Dependencies (project is buildless; none committed, but ignore if added later)
+node_modules/
+
+# Build output
+dist/
+
+# Editor / OS cruft
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
