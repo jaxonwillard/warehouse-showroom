@@ -65,6 +65,13 @@ export function buildWall(start, end, opts) {
     metalness: 0.3,
   });
 
+  // Black metal material for the window perimeter frame.
+  const blackMetalMat = new THREE.MeshStandardMaterial({
+    color: 0x0a0a0a,
+    roughness: 0.4,
+    metalness: 0.7,
+  });
+
   let cursor = 0; // current position along the wall
   for (const o of sorted) {
     const oStart = o.offset;
@@ -106,6 +113,24 @@ export function buildWall(start, end, opts) {
           group.add(m);
         }
       }
+
+      // 2" black metal perimeter frame around windows.
+      if (o.kind === "window") {
+        const fw = 2 / 12; // 2 inch face width
+        const fd = thickness + 0.05; // slightly proud of the wall on both faces
+        const x0 = oStart;
+        const x1 = oStart + o.width;
+        const addBar = (px, py, lx, ly) => {
+          const bar = new THREE.Mesh(new THREE.BoxGeometry(lx, ly, fd), blackMetalMat);
+          bar.position.set(px, py, 0);
+          bar.castShadow = true;
+          group.add(bar);
+        };
+        addBar(cx, top - fw / 2, o.width, fw); // top
+        addBar(cx, bottom + fw / 2, o.width, fw); // bottom
+        addBar(x0 + fw / 2, cy, fw, paneH); // left
+        addBar(x1 - fw / 2, cy, fw, paneH); // right
+      }
     }
 
     cursor = Math.max(cursor, oEnd);
@@ -141,8 +166,10 @@ export function buildRoom(room, opts) {
     const a = pts[i];
     const b = pts[(i + 1) % n];
     const segOpenings = (room.openings || []).filter((o) => o.segment === i);
+    // Per-segment height override (room.wallHeights[i]) falls back to the room height.
+    const segHeight = room.wallHeights?.[i] ?? room.height ?? height;
     const wall = buildWall(a, b, {
-      height: room.height ?? height,
+      height: segHeight,
       thickness: room.wallThickness ?? thickness,
       openings: segOpenings,
       material,

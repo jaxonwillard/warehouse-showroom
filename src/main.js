@@ -63,8 +63,10 @@ ortho.lookAt(L / 2, 0, D / 2);
 // First-person "walk" camera, eye height fixed at 6 ft.
 const EYE_HEIGHT = 6;
 const walkCam = new THREE.PerspectiveCamera(70, aspect(), 0.1, 5000);
-walkCam.position.set(140, EYE_HEIGHT, 30);
-walkCam.lookAt(161.9, EYE_HEIGHT, 41.55); // face the showroom
+const WALK_START = new THREE.Vector3(175.1, EYE_HEIGHT, 65.2); // entry point
+const WALK_LOOK = new THREE.Vector3(L * 0.45, EYE_HEIGHT, D * 0.35); // face the interior
+walkCam.position.copy(WALK_START);
+walkCam.lookAt(WALK_LOOK);
 
 let camera = persp;
 
@@ -115,6 +117,7 @@ const state = {
   view: "3D",
   floor: true,
   shell: true,
+  ceiling: true,
   existing: true,
   showroom: true,
   furniture: true,
@@ -138,6 +141,8 @@ function applyView() {
     controls.update();
   } else if (state.view === "Walk") {
     camera = walkCam;
+    walkCam.position.copy(WALK_START); // always start from the entry point
+    walkCam.lookAt(WALK_LOOK);
     walkhintEl.style.display = "flex"; // prompt the user to click to start
   } else {
     camera = ortho;
@@ -147,6 +152,7 @@ function applyView() {
     controls.enableRotate = false; // pure top-down pan/zoom
     controls.update();
   }
+  applyLayers(); // ceiling visibility depends on the view
   updatePickerUI();
 }
 
@@ -156,6 +162,8 @@ function applyLayers() {
   layers.existing.visible = state.existing;
   layers.showroom.visible = state.showroom;
   layers.furniture.visible = state.furniture;
+  // Ceiling would block the top-down blueprint, so force it off there.
+  layers.ceiling.visible = state.ceiling && state.view !== "Blueprint";
 }
 
 function applyWireframe() {
@@ -173,6 +181,7 @@ gui.add(state, "view", ["3D", "Walk", "Blueprint"]).name("View").onChange(applyV
 const layerFolder = gui.addFolder("Layers");
 layerFolder.add(state, "floor").name("Floor + grid").onChange(applyLayers);
 layerFolder.add(state, "shell").name("Warehouse shell").onChange(applyLayers);
+layerFolder.add(state, "ceiling").name("Ceiling + lights").onChange(applyLayers);
 layerFolder.add(state, "existing").name("Existing rooms").onChange(applyLayers);
 layerFolder.add(state, "showroom").name("Showroom").onChange(applyLayers);
 layerFolder.add(state, "furniture").name("Furniture").onChange(applyLayers);

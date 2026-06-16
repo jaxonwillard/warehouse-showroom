@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { buildRoom, buildWall } from "./geometry/walls.js";
 import { buildTable } from "./geometry/furniture.js";
+import { makeConcreteTexture } from "./geometry/textures.js";
 import { warehouse } from "./data/warehouse.js";
 import { showroom } from "./data/showroom.js";
 
@@ -11,6 +12,7 @@ export function buildScene() {
   const layers = {
     floor: new THREE.Group(),
     shell: new THREE.Group(),
+    ceiling: new THREE.Group(),
     existing: new THREE.Group(),
     showroom: new THREE.Group(),
     furniture: new THREE.Group(),
@@ -22,10 +24,13 @@ export function buildScene() {
 
   const { length: L, depth: D, wallHeight, wallThickness } = warehouse;
 
-  // --- Floor slab ---------------------------------------------------------
+  // --- Floor slab (polished concrete) ------------------------------------
+  const concreteTex = makeConcreteTexture();
+  concreteTex.repeat.set(L / 12, D / 12); // tile across the slab
   const floorMat = new THREE.MeshStandardMaterial({
-    color: 0x3a3f48,
-    roughness: 0.95,
+    map: concreteTex,
+    color: 0xbdbbb3,
+    roughness: 0.92,
     metalness: 0,
   });
   const floorGeo = new THREE.PlaneGeometry(L, D);
@@ -40,10 +45,10 @@ export function buildScene() {
   grid.position.set(L / 2, 0.02, D / 2);
   layers.floor.add(grid);
 
-  // --- Warehouse shell ----------------------------------------------------
+  // --- Warehouse shell (white painted block) -----------------------------
   const shellMat = new THREE.MeshStandardMaterial({
-    color: 0x8a8f98,
-    roughness: 0.9,
+    color: 0xe6e3dc,
+    roughness: 0.95,
     metalness: 0,
     side: THREE.DoubleSide,
   });
@@ -85,9 +90,9 @@ export function buildScene() {
   const colCfg = warehouse.columns;
   if (colCfg) {
     const colMat = new THREE.MeshStandardMaterial({
-      color: 0x7c828c,
-      roughness: 0.9,
-      metalness: 0,
+      color: 0xf2c200, // safety yellow, matching the reference photo
+      roughness: 0.6,
+      metalness: 0.1,
     });
     const colGeo = new THREE.CylinderGeometry(
       colCfg.size / 2,
@@ -102,6 +107,39 @@ export function buildScene() {
       col.receiveShadow = true;
       layers.shell.add(col);
     }
+  }
+
+  // --- Ceiling deck + strip lights ---------------------------------------
+  // Dark open metal deck at the eaves, with long continuous LED strips in rows.
+  const deckMat = new THREE.MeshStandardMaterial({
+    color: 0x26282b,
+    roughness: 0.9,
+    metalness: 0.2,
+    side: THREE.DoubleSide,
+  });
+  const deck = new THREE.Mesh(new THREE.PlaneGeometry(L, D), deckMat);
+  deck.rotation.x = Math.PI / 2; // face downward
+  deck.position.set(L / 2, wallHeight, D / 2);
+  layers.ceiling.add(deck);
+
+  const fixtureMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    emissive: 0xffffff,
+    emissiveIntensity: 1.0,
+    roughness: 0.4,
+  });
+  const lightRows = 5;
+  const stripGeo = new THREE.BoxGeometry(L * 0.86, 0.35, 0.85);
+  const fixtureY = wallHeight - 1.5;
+  for (let r = 0; r < lightRows; r++) {
+    const z = (D * (r + 1)) / (lightRows + 1);
+    const strip = new THREE.Mesh(stripGeo, fixtureMat);
+    strip.position.set(L / 2, fixtureY, z);
+    layers.ceiling.add(strip);
+    // A soft point light per row so the strips actually illuminate the space.
+    const lamp = new THREE.PointLight(0xfff6e8, 220, 0, 2);
+    lamp.position.set(L / 2, fixtureY - 0.5, z);
+    layers.ceiling.add(lamp);
   }
 
   // --- Existing rooms (context) ------------------------------------------
