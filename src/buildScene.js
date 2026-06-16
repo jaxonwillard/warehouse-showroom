@@ -81,6 +81,29 @@ export function buildScene() {
     layers.shell.add(wall);
   }
 
+  // --- Structural columns -------------------------------------------------
+  const colCfg = warehouse.columns;
+  if (colCfg) {
+    const colMat = new THREE.MeshStandardMaterial({
+      color: 0x7c828c,
+      roughness: 0.9,
+      metalness: 0,
+    });
+    const colGeo = new THREE.CylinderGeometry(
+      colCfg.size / 2,
+      colCfg.size / 2,
+      wallHeight,
+      24
+    );
+    for (let x = colCfg.spacing; x < L; x += colCfg.spacing) {
+      const col = new THREE.Mesh(colGeo, colMat);
+      col.position.set(x, wallHeight / 2, colCfg.z);
+      col.castShadow = true;
+      col.receiveShadow = true;
+      layers.shell.add(col);
+    }
+  }
+
   // --- Existing rooms (context) ------------------------------------------
   const existingMat = new THREE.MeshStandardMaterial({
     color: 0x6f7682,

@@ -47,6 +47,14 @@ export const warehouse = {
     },
   ],
 
+  // Structural columns: a single row down the centerline of the depth
+  // (y = half the depth wall length), spaced every 25 ft along the length.
+  columns: {
+    z: DEPTH / 2, // 35.05
+    spacing: 25, // ft between columns along X
+    size: 1.5, // square column footprint (ft)
+  },
+
   // Existing office in the bottom area (the room the user marked for office space).
   existingRooms: [
     {

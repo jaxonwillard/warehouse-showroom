@@ -37,9 +37,9 @@ export const showroom = {
       ],
       // Segment indices: 0 = N (top) wall, 1 = E (right) wall, 2 = S wall, 3 = W wall.
       openings: [
-        // Top wall: 150" x 95" window (12.5 x 7.917 ft), centered on the 20.4 ft wall
-        // both horizontally and vertically in the 12 ft height.
-        { segment: 0, offset: 3.95, width: 12.5, bottom: 2.04, top: 9.96, kind: "window" },
+        // Top wall: 150" x 95" window (12.5 x 7.917 ft), centered horizontally on
+        // the 20.4 ft wall, sitting on the floor (sill at 0, head at 7.92 ft).
+        { segment: 0, offset: 3.95, width: 12.5, bottom: 0, top: 7.92, kind: "window" },
         // Right wall: 3-panel sliding glass door, 9 ft wide x 10 ft tall, centered
         // horizontally on the 11.9 ft wall, floor to 10 ft.
         { segment: 1, offset: 1.45, width: 9, bottom: 0, top: 10, kind: "glassdoor", panels: 3 },
