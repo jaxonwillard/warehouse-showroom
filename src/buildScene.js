@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { buildRoom, buildWall } from "./geometry/walls.js";
-import { buildTable } from "./geometry/furniture.js";
+import { buildTable, buildTv, buildCounter } from "./geometry/furniture.js";
+import { buildCanopy } from "./geometry/canopy.js";
 import { makeConcreteTexture } from "./geometry/textures.js";
 import { warehouse } from "./data/warehouse.js";
 import { showroom } from "./data/showroom.js";
@@ -166,7 +167,14 @@ export function buildScene() {
     metalness: 0,
     side: THREE.DoubleSide,
   });
+  const ceilingMat = new THREE.MeshStandardMaterial({
+    color: 0xeeeeec,
+    roughness: 0.9,
+    metalness: 0,
+    side: THREE.DoubleSide,
+  });
   for (const room of showroom.rooms || []) {
+    const h = room.height ?? showroom.height;
     layers.showroom.add(
       buildRoom(room, {
         height: showroom.height,
@@ -175,11 +183,31 @@ export function buildScene() {
         glassColor: showroom.glassColor,
       })
     );
+    // Optional ceiling capping the room at wall height.
+    if (room.ceiling) {
+      const xs = room.points.map((p) => p.x);
+      const zs = room.points.map((p) => p.z);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minZ = Math.min(...zs), maxZ = Math.max(...zs);
+      const ceil = new THREE.Mesh(
+        new THREE.PlaneGeometry(maxX - minX, maxZ - minZ),
+        ceilingMat
+      );
+      ceil.rotation.x = Math.PI / 2; // horizontal
+      ceil.position.set((minX + maxX) / 2, h, (minZ + maxZ) / 2);
+      ceil.receiveShadow = true;
+      layers.showroom.add(ceil);
+    }
   }
+
+  // --- South canopy -------------------------------------------------------
+  if (showroom.canopy) layers.showroom.add(buildCanopy(showroom.canopy));
 
   // --- Furniture ----------------------------------------------------------
   for (const f of showroom.furniture || []) {
     if (f.kind === "table") layers.furniture.add(buildTable(f));
+    else if (f.kind === "tv") layers.furniture.add(buildTv(f));
+    else if (f.kind === "counter") layers.furniture.add(buildCounter(f));
   }
 
   return { root, layers, bounds: { L, D, H: wallHeight } };

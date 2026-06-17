@@ -20,19 +20,24 @@
 
 // Showroom footprint defined by its top-left (NW) corner + size, so moving the
 // room is a one-line change and the table/openings follow automatically.
-const NW = { x: 150.1, z: 1.3 }; // top-left corner (user-placed)
-const WIDTH = 20.4; // along X
-const DEPTH = 11.9; // along Z
+// Placed by its SW corner; the side ("leg") walls keep their length (DEPTH),
+// and the room stretches in width to reach the warehouse right wall.
+const DEPTH = 11.9; // along Z — left/right wall length (unchanged)
+const SW = { x: 177, z: 33.1 }; // bottom-left corner; west wall at x = 177
+const NW = { x: SW.x, z: SW.z - DEPTH }; // (174.5, 21.2)
+const RIGHT_WALL = 200; // warehouse right (east) wall — room extends to here
+const WIDTH = RIGHT_WALL - NW.x; // 25.5, along X
 const CENTER = { x: NW.x + WIDTH / 2, z: NW.z + DEPTH / 2 };
+const ROOM_HEIGHT = 12; // wall height (ft), shared with the canopy
 
 export const showroom = {
-  height: 12, // showroom wall height (ft)
+  height: ROOM_HEIGHT, // showroom wall height (ft)
   wallThickness: 0.5, // ~6 in stud wall
   glassColor: 0x9fc8e8,
 
   rooms: [
     {
-      // ~20.4 ft wide x ~11.9 ft deep. This room IS the conference room.
+      // ~25.5 ft wide x ~11.9 ft deep (stretched to the right wall). The conference room.
       name: "Showroom / Conference Room",
       points: [
         { x: NW.x, z: NW.z }, // 0: NW corner
@@ -41,19 +46,33 @@ export const showroom = {
         { x: NW.x, z: NW.z + DEPTH }, // 3: SW corner
       ],
       // Segment indices: 0 = N (top) wall, 1 = E (right) wall, 2 = S wall, 3 = W wall.
-      // Per-wall height overrides: left (W) and right (E) walls are 14 ft;
-      // top/bottom stay at the default showroom height (12 ft).
-      wallHeights: { 1: 14, 3: 14 },
+      // All walls are 12 ft (uniform).
+      ceiling: true, // cap the room with a ceiling at wall height
       openings: [
-        // Bottom (S) wall: 10 x 10 ft window, centered horizontally on the 20.4 ft
-        // wall, sitting on the floor (sill at 0, head at 10 ft).
-        { segment: 2, offset: 5.2, width: 10, bottom: 0, top: 10, kind: "window" },
-        // Right wall: 3-panel sliding glass door, 9 ft wide x 10 ft tall, centered
-        // horizontally on the 11.9 ft wall, floor to 10 ft.
-        { segment: 1, offset: 1.45, width: 9, bottom: 0, top: 10, kind: "glassdoor", panels: 3 },
+        // North wall: 3-panel sliding glass door, 10 ft tall, spanning 90% of the
+        // width, centered.
+        { segment: 0, offset: WIDTH * 0.05, width: WIDTH * 0.9, bottom: 0, top: 10, kind: "glassdoor", panels: 3 },
+        // South wall: same 3-panel sliding glass door.
+        { segment: 2, offset: WIDTH * 0.05, width: WIDTH * 0.9, bottom: 0, top: 10, kind: "glassdoor", panels: 3 },
+        // West wall: existing 3-panel sliding glass door (9 ft wide x 10 ft tall).
+        { segment: 3, offset: (DEPTH - 9) / 2, width: 9, bottom: 0, top: 10, kind: "glassdoor", panels: 3 },
       ],
     },
   ],
+
+  // Canopy projecting north from the showroom's north wall.
+  canopy: {
+    name: "North Canopy",
+    xMin: NW.x, // matches showroom width
+    width: WIDTH,
+    zStart: NW.z, // attaches at the north wall
+    extend: -10, // projects 10 ft north (-Z)
+    height: ROOM_HEIGHT, // same height as the showroom
+    slabThickness: 0.6,
+    legSize: 0.6,
+    potCols: 4,
+    potRows: 3,
+  },
 
   // Furniture placed inside the showroom (rendered as its own toggleable layer).
   furniture: [
@@ -66,6 +85,24 @@ export const showroom = {
       height: 2.5,
       axis: "x", // table length runs along the room's long (X) dimension
       chairsPerSide: 3,
+    },
+    {
+      // Flat-panel TV mounted on the east wall, facing into the room (-X).
+      kind: "tv",
+      name: "Wall TV",
+      center: { x: RIGHT_WALL - 0.4, y: 5.5, z: CENTER.z }, // just off the east wall
+      width: 6, // along the wall (Z)
+      height: 3.5,
+      rotateDeg: -90, // face -X (into the room)
+    },
+    {
+      // Counter under the TV, against the east wall, spanning N->S (full depth).
+      kind: "counter",
+      name: "Counter",
+      center: { x: RIGHT_WALL - 1.25, z: CENTER.z }, // back against the east wall
+      length: DEPTH, // north-south span (along Z)
+      depth: 2, // protrusion into the room (along X)
+      height: 3,
     },
   ],
 };

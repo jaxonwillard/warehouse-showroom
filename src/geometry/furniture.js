@@ -86,3 +86,75 @@ export function buildTable(spec) {
   if (axis === "z") group.rotation.y = Math.PI / 2;
   return group;
 }
+
+// A flat-panel TV. Built in local space with the screen facing +Z, then placed
+// at spec.center and rotated about Y by spec.rotateDeg to face into the room.
+export function buildTv(spec) {
+  const { center, width, height, depth = 0.3, rotateDeg = 0 } = spec;
+  const g = new THREE.Group();
+  g.name = spec.name || "tv";
+
+  const bezelMat = new THREE.MeshStandardMaterial({
+    color: 0x0a0a0a,
+    roughness: 0.5,
+    metalness: 0.3,
+  });
+  const screenMat = new THREE.MeshStandardMaterial({
+    color: 0x10141c,
+    roughness: 0.2,
+    metalness: 0.1,
+    emissive: 0x16243a,
+    emissiveIntensity: 0.45,
+  });
+
+  const bezel = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), bezelMat);
+  bezel.castShadow = true;
+  g.add(bezel);
+
+  const screen = new THREE.Mesh(
+    new THREE.PlaneGeometry(width * 0.94, height * 0.9),
+    screenMat
+  );
+  screen.position.z = depth / 2 + 0.01;
+  g.add(screen);
+
+  g.position.set(center.x, center.y, center.z);
+  g.rotation.y = (rotateDeg * Math.PI) / 180;
+  return g;
+}
+
+// A base cabinet / counter. `depth` runs along X (protrusion from the wall),
+// `length` runs along Z (north-south span). Sits on the floor at spec.center.
+export function buildCounter(spec) {
+  const { center, length, depth = 2, height = 3 } = spec;
+  const g = new THREE.Group();
+  g.name = spec.name || "counter";
+
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xdadbd8, roughness: 0.7 });
+  const topMat = new THREE.MeshStandardMaterial({
+    color: 0x33343a,
+    roughness: 0.35,
+    metalness: 0.1,
+  });
+
+  const topThick = 0.12;
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(depth, height - topThick, length),
+    bodyMat
+  );
+  body.position.y = (height - topThick) / 2;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  g.add(body);
+
+  const top = new THREE.Mesh(
+    new THREE.BoxGeometry(depth + 0.2, topThick, length),
+    topMat
+  );
+  top.position.y = height - topThick / 2;
+  top.castShadow = true;
+  g.add(top);
+
+  g.position.set(center.x, 0, center.z);
+  return g;
+}

@@ -64,7 +64,7 @@ ortho.lookAt(L / 2, 0, D / 2);
 const EYE_HEIGHT = 6;
 const walkCam = new THREE.PerspectiveCamera(70, aspect(), 0.1, 5000);
 const WALK_START = new THREE.Vector3(175.1, EYE_HEIGHT, 65.2); // entry point
-const WALK_LOOK = new THREE.Vector3(L * 0.45, EYE_HEIGHT, D * 0.35); // face the interior
+const WALK_LOOK = new THREE.Vector3(WALK_START.x + 50, EYE_HEIGHT, WALK_START.z); // face east (+X)
 walkCam.position.copy(WALK_START);
 walkCam.lookAt(WALK_LOOK);
 
@@ -114,7 +114,7 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 // --- View switching -----------------------------------------------------
 const state = {
-  view: "3D",
+  view: "Walk",
   floor: true,
   shell: true,
   ceiling: true,
@@ -283,6 +283,9 @@ function updatePickerUI() {
   if (!on) readoutEl.style.display = "none";
 }
 updatePickerUI();
+
+// Enter the default view (Walk) on load.
+applyView();
 
 // --- Resize + render loop ----------------------------------------------
 function resize() {
