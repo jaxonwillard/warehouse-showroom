@@ -158,3 +158,113 @@ export function buildCounter(spec) {
   g.position.set(center.x, 0, center.z);
   return g;
 }
+
+// A simple rectangular display box / pedestal sitting on the floor.
+// spec.size is { x, y, z } in feet; spec.center is the floor center { x, z }.
+export function buildBox(spec) {
+  const { center, size } = spec;
+  const g = new THREE.Group();
+  g.name = spec.name || "box";
+
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xc9ccd2,
+    roughness: 0.55,
+    metalness: 0.05,
+  });
+  const box = new THREE.Mesh(new THREE.BoxGeometry(size.x, size.y, size.z), mat);
+  box.position.set(center.x, size.y / 2, center.z);
+  box.castShadow = true;
+  box.receiveShadow = true;
+  g.add(box);
+  return g;
+}
+
+// A free-standing framed glass display unit. Built facing +Z, then rotated about
+// Y by spec.rotateDeg (-90 = faces west). `width` runs along local X.
+//   type     : "single" | "double" | "window"
+//   boxHeight: if > 0, the unit sits atop a base box of this height (ft)
+//   ajar     : pivot the glass leaf open by this many degrees (pivoting doors)
+export function buildDoorPanel(spec) {
+  const {
+    center,
+    width,
+    height,
+    depth = 0.4,
+    rotateDeg = 0,
+    type = "single",
+    boxHeight = 0,
+    ajar = 0,
+  } = spec;
+  const g = new THREE.Group();
+  g.name = spec.name || "door";
+
+  const frameMat = new THREE.MeshStandardMaterial({
+    color: 0x0a0a0a,
+    roughness: 0.4,
+    metalness: 0.7,
+  });
+  const glassMat = new THREE.MeshPhysicalMaterial({
+    color: 0x9fc8e8,
+    transparent: true,
+    opacity: 0.3,
+    roughness: 0.05,
+    metalness: 0,
+    transmission: 0.6,
+    side: THREE.DoubleSide,
+  });
+  const baseMat = new THREE.MeshStandardMaterial({ color: 0xcfd2d6, roughness: 0.7 });
+
+  const fw = 0.25; // frame face width
+  const y0 = boxHeight; // the framed unit starts atop the optional base box
+
+  // Optional base box (e.g. a window mounted on a 36" box).
+  if (boxHeight > 0) {
+    const box = new THREE.Mesh(new THREE.BoxGeometry(width, boxHeight, depth + 0.2), baseMat);
+    box.position.set(0, boxHeight / 2, 0);
+    box.castShadow = true;
+    box.receiveShadow = true;
+    g.add(box);
+  }
+
+  const addBar = (px, py, lx, ly) => {
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(lx, ly, depth), frameMat);
+    bar.position.set(px, py, 0);
+    bar.castShadow = true;
+    g.add(bar);
+  };
+
+  // Outer frame.
+  addBar(0, y0 + height - fw / 2, width, fw); // head
+  addBar(0, y0 + fw / 2, width, fw); // sill
+  addBar(-width / 2 + fw / 2, y0 + height / 2, fw, height); // left jamb
+  addBar(width / 2 - fw / 2, y0 + height / 2, fw, height); // right jamb
+
+  // Divider: center stile for a double door, a horizontal bar for a window.
+  if (type === "double") {
+    addBar(0, y0 + height / 2, fw * 0.6, height);
+  } else if (type === "window") {
+    addBar(0, y0 + height / 2, width, fw * 0.7);
+  }
+
+  // Glass leaf (in a subgroup so a pivoting door can swing about its center).
+  const leaf = new THREE.Group();
+  const glass = new THREE.Mesh(
+    new THREE.PlaneGeometry(width - 2 * fw, height - 2 * fw),
+    glassMat
+  );
+  glass.position.set(0, y0 + height / 2, 0);
+  leaf.add(glass);
+  if (ajar) leaf.rotation.y = (ajar * Math.PI) / 180;
+  g.add(leaf);
+
+  // Handle for doors (not windows).
+  if (type !== "window") {
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.2, 0.08), frameMat);
+    handle.position.set(width * 0.16, y0 + height * 0.45, depth / 2);
+    g.add(handle);
+  }
+
+  g.position.set(center.x, 0, center.z);
+  g.rotation.y = (rotateDeg * Math.PI) / 180;
+  return g;
+}

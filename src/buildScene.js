@@ -1,8 +1,14 @@
 import * as THREE from "three";
 import { buildRoom, buildWall } from "./geometry/walls.js";
-import { buildTable, buildTv, buildCounter } from "./geometry/furniture.js";
+import {
+  buildTable,
+  buildTv,
+  buildCounter,
+  buildDoorPanel,
+  buildBox,
+} from "./geometry/furniture.js";
 import { buildCanopy } from "./geometry/canopy.js";
-import { makeConcreteTexture } from "./geometry/textures.js";
+import { makeConcreteTexture, makeWoodTexture } from "./geometry/textures.js";
 import { warehouse } from "./data/warehouse.js";
 import { showroom } from "./data/showroom.js";
 
@@ -161,9 +167,11 @@ export function buildScene() {
   }
 
   // --- Showroom / conference room (new construction) ---------------------
+  // Light wood pattern on the showroom walls (scaled per-segment in buildWall).
   const showroomMat = new THREE.MeshStandardMaterial({
-    color: 0xcdd3dc,
-    roughness: 0.7,
+    map: makeWoodTexture(),
+    color: 0xffffff,
+    roughness: 0.75,
     metalness: 0,
     side: THREE.DoubleSide,
   });
@@ -203,11 +211,17 @@ export function buildScene() {
   // --- South canopy -------------------------------------------------------
   if (showroom.canopy) layers.showroom.add(buildCanopy(showroom.canopy));
 
+  // --- Free-standing display doors ---------------------------------------
+  for (const d of showroom.displayDoors || []) {
+    layers.showroom.add(buildDoorPanel(d));
+  }
+
   // --- Furniture ----------------------------------------------------------
   for (const f of showroom.furniture || []) {
     if (f.kind === "table") layers.furniture.add(buildTable(f));
     else if (f.kind === "tv") layers.furniture.add(buildTv(f));
     else if (f.kind === "counter") layers.furniture.add(buildCounter(f));
+    else if (f.kind === "box") layers.furniture.add(buildBox(f));
   }
 
   return { root, layers, bounds: { L, D, H: wallHeight } };

@@ -37,10 +37,21 @@ export function buildWall(start, end, opts) {
 
   // Local-space box helper: position is measured along the wall (u) and up (y),
   // with `u`/`y` being the box CENTER. Returns nothing, adds to group.
+  const TILE_FT = 4; // one texture tile covers a 4 ft square of wall
   const addBox = (uCenter, yCenter, len, h, mat) => {
     if (len <= 1e-4 || h <= 1e-4) return;
     const geo = new THREE.BoxGeometry(len, h, thickness);
-    const mesh = new THREE.Mesh(geo, mat);
+    // If the material is textured, clone it per box and scale the map so the
+    // pattern keeps a consistent real-world size across walls of any length.
+    let useMat = mat;
+    if (mat.map) {
+      useMat = mat.clone();
+      useMat.map = mat.map.clone();
+      useMat.map.wrapS = useMat.map.wrapT = THREE.RepeatWrapping;
+      useMat.map.repeat.set(len / TILE_FT, h / TILE_FT);
+      useMat.map.needsUpdate = true;
+    }
+    const mesh = new THREE.Mesh(geo, useMat);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     // Place along local +X, then the whole group is rotated/positioned below.
